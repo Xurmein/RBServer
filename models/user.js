@@ -15,7 +15,7 @@ module.exports = function(sequelize, DataType){
         },
         adminID:{
             type: DataType.STRING,
-            allowNull: false,
+            allowNull: true,
             unique: false,
             validate:{
                 isEmail : true
