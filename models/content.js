@@ -1,5 +1,5 @@
 module.exports = function(sequelize, DataType){
-    return sequelize.define('userpost', {
+    return sequelize.define('content', {
         creator:{
             type: DataType.STRING,
             allowNull: false,

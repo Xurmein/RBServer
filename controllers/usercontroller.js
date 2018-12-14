@@ -1,57 +1,62 @@
 var express = require('express');
 var router = express.Router();
 var sequelize = require('../db');
-var User = sequelize.import('../models/user');
 var jwt = require('jsonwebtoken');
-var bcrypt = require('bcryptjs')
+var bcrypt = require('bcryptjs');
 
-router.post('/register', function(req, res){ 
+var User = sequelize.import('../models/user');
+var adminValidation = require('../middleware/validate-admin');
+var sessionValidation = require('../middleware/validate-session');
+
+router.post('/register/admin', function(req, res){ 
     let Username = req.body.user.username;
     let passwordhash = req.body.user.password;
     let admin = req.body.user.is_admin;
     let adminEmail = req.body.user.adminID;
 
-    if(admin === true){
-        User.create({
-            username : Username,
-            password : bcrypt.hashSync(passwordhash, 15),
-            is_admin : admin,
-            adminID : adminEmail
-        }).then(
-            function createAdminSuccess(user){
-                // let aToken = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*3} );
-                let token = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24} );
-                res.json({
-                    username : user,
-                    message : 'Successfully registered as administrator!',
-                    sessionToken : token,
-                    // adminToken : aToken,
-                });
-            }, 
-            function createAdminFail(err){
-                res.status(500).send({ error: '500 - Internal Server Error'})
-            }
-        );
-    } else if(admin === false || null){
-        User.create({
-            username : Username,
-            password : bcrypt.hashSync(passwordhash, 10)
-        }).then(
-            function createUserSuccess(user){
-                let token = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24} );
-                res.json({
-                    username : user,
-                    message : 'Successfully registered as user!',
-                    sessionToken : token
-                });
-            },
-            function createUserFail(err){
-                res.status(500).send({ error : '500 - Internal Server Error'})
-            }
-        )}
-    }
-)
+    User.create({
+        username : Username,
+        password : bcrypt.hashSync(passwordhash, 15),
+        is_admin : admin,
+        adminID : adminEmail
+    }).then(
+        function createAdminSuccess(user){
+            let aToken = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24});
+            let token = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24});
+            res.json({
+                username : user,
+                message : 'Successfully registered as administrator!',
+                sessionToken : token,
+                adminToken : aToken
+            });
+        }, 
+    function createAdminFail(){
+        res.status(500).send({error: '500 - Internal Server Error'})
+    });
+});
+    
+router.post('/register/new_user', adminValidation, function(req, res){
+    let Username = req.body.user.username;
+    let passwordhash = req.body.user.password
+    let admin = req.body.user.is_admin;
+    let AssociatedAdmin = req.body.user.adminID;
 
+    User.create({
+        username : Username,
+        password : bcrypt.hashSync(passwordhash, 5),
+        is_admin : admin,
+        adminID : AssociatedAdmin
+    }).then(
+        function createUserSuccess(user){
+            res.json({
+                username : user,
+                message : 'Successfully created a new user account',
+            });
+        },
+    function createUserFail(){
+        res.status(500).send({error: '500 - Internal Service Error'})
+    });
+}); 
 
 router.post('/login', function(req, res){
     let admin = req.body.user.is_admin;
@@ -63,13 +68,13 @@ router.post('/login', function(req, res){
                 if(user){
                     bcrypt.compare(req.body.user.password, user.password, function(err, authMatch){
                         if(authMatch){
-                        // let aToken = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*3} );
+                        let aToken = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24} );
                         let token = jwt.sign({id : user.id}, process.env.SIGN, {expiresIn: 60*60*24} );
                         res.json({
                             username : user,
                             message : `Welcome back, ${user.username}`,
                             sessionToken : token,
-                            //adminToken : aToken,
+                            adminToken : aToken
                         });
                 } else {
                     res.status(502).send({ error: "502/Bad Gateway"})
@@ -79,7 +84,7 @@ router.post('/login', function(req, res){
             res.status(500).send({ error: "Have you registered yet?"})
         }   
     },
-    function(error){
+    function(){
         res.status(501).send({ error: "Here be dragons--turn back! Also, get in touch with the idiot that made this site..." })
     });
     } else if(admin === false || null){
@@ -103,15 +108,92 @@ router.post('/login', function(req, res){
                     res.status(500).send({ error: "Have you registered yet?"})
                 }
             },
-            function userLoginFail(err){
+            function userLoginFail(){
                 res.status(500).send({ error : '500 - Internal Server Error'})
             });
         }
     }
 )
 
+router.get('/sub-users', adminValidation, function(req, res){
+    let AssociatedAdmin = req.user.adminID
+
+    User.findAll({
+        where: {adminID : AssociatedAdmin}
+    })
+    .then(
+        function mySubUsers(data){
+            res.json(data)
+        },
+        function getSubUsersFail(){
+            res.status(500).send({error: '500 - Internal Service Error' })
+        }
+    );
+});
+
+router.get('/sub-users/:id', adminValidation, function(req, res){
+    let data = req.params.id
+    let AssociatedAdmin = req.user.adminID
+
+    User.findOne({
+        where: {
+            id : data,
+            adminID : AssociatedAdmin
+        }
+    })
+    .then(
+        function getOneSubUser(data){
+            res.json(data)
+        },
+        function getOneSubUserFail(){
+            res.status(500).send({error: '500 - Internal Service Error' })
+        }
+    );
+});
 
 
+router.delete('/delete_account/:id', sessionValidation, function(req, res){
+    let data = req.params.id;
+
+    User.destroy({
+        where: { 
+            id : data,
+        }
+    }).then(
+        function deleteUserSuccess(){
+            res.send('What user?');
+        },
+        function deleteUserError(){
+            res.status(500).send({error: '500 - Internal Server Error'});
+        }
+    );
+});
+
+router.put('/update_account/:id', sessionValidation, function(req, res){
+    let data = req.params.id;
+    let userid = req.user.id;
+    let newUsername = req.body.user.username
+    let newPasswordhash = req.body.user.password
+
+    User.update({
+        username : newUsername,
+        password : bcrypt.hashSync(newPasswordhash, 10)
+    },  { where: { 
+           id : data,
+           id : userid
+        }
+    }).then(
+        function userUpdated(updateUserAccount){
+            res.json({
+                message: 'Entry updated, check your training log to confirm accuracy',
+                updateUserAccount
+            });
+        },
+        function updateError(err){
+            res.status(500).send({error: '500 - Internal Server Error'});
+        }
+    );
+});
 module.exports = router;
 
     
