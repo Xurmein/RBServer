@@ -1,15 +1,15 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize(
-    process.env.DB_URL ||
-    `postgresql:postgres:${encodeURIComponent(process.env.PASS)}@localhost/cosmoknotserver`,
+const sequelize = new Sequelize('cosmos', 'postgres', 'skysphere11',
+   
     {
+    host: 'localhost',
     dialect: 'postgres'
 })
 
 sequelize.authenticate().then(
     function(){
-        console.log('marsServer + pgDB = 4eva! lol')
+        console.log('Connected to Cosmos')
     },
     function(err){
         console.log(err);

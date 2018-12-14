@@ -1,5 +1,5 @@
 {
-  "name": "cosmoknotserver",
+  "name": "cosmos",
   "version": "0.5.0",
   "description": "cosmoknotserver-redBadgeProject",
   "main": "app.js",
@@ -7,13 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js"
   },
-  "author": "Jake Peacock",
+  "author": "Gunjan Aulakh",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
+    "http-server": "^0.11.1",
     "jsonwebtoken": "^8.2.0",
     "pg": "^7.4.1",
     "pg-hstore": "^2.3.2",

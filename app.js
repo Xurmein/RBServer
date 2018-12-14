@@ -5,6 +5,7 @@ var app = express();
 
 
 var user = require('./controllers/usercontroller');
+let admin = require('./controllers/admincontroller');
 var journalentry = require('./controllers/journal-entrycontroller');
 
 var sequelize = require('./db');
@@ -12,7 +13,8 @@ var sequelize = require('./db');
 var bodyParser = require('body-parser');
 
 
-sequelize.sync(); ///{force: true} to reset tables in DB
+sequelize.sync({force: true}); ///{force: true} to reset tables in DB
+
 app.use(bodyParser.json());
 app.use(require('./middleware/headers'));
 
@@ -27,6 +29,6 @@ app.use(require('./middleware/validate-session'))
 app.use('/my/journals', journalentry);
 
 
-app.listen(process.env.PORT, () => {
-    console.log(`CONNECTED TO PORT ${process.env.PORT}`)
+app.listen(3000, () => {
+    console.log('App is listening on 3000')
 });

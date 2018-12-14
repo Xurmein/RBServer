@@ -1,22 +1,37 @@
-module.exports = function(sequelize, DataType){
+module.exports = function(sequelize, DataTypes){
+
+    
     return sequelize.define('user', {
         username:{
-            type: DataType.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
             unique: true
         },
         password:{
-            type: DataType.STRING,
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        email: {
+            type: DataTypes.STRING,
             allowNull: false
         },
         is_admin:{
-            type: DataType.BOOLEAN,
+            type: DataTypes.BOOLEAN,
             allowNull: true
         },
-        adminID:{
-            type: DataType.STRING,
+        Qualities: {
+            type: DataTypes.ENUM,
+            values:
+            ["",
+            "Intelligence", "Adaptability",
+            "Physical Condition", "Mental Endurance",
+            "Education"
+            ]
+        }
+        /*adminID:{
+            type: DataTypes.STRING,
             allowNull: true,
             unique: true
-        }
+        }*/
     });
 };
