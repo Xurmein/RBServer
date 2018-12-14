@@ -1,10 +1,9 @@
 {
   "name": "cosmoknotserver",
   "version": "0.5.0",
-  "description": "cosmoknotserver-redBadgeProject",
+  "description": "cosmoknotserver",
   "main": "app.js",
   "scripts": {
-   
     "start": "node app.js"
   },
   "author": "Jake Peacock",
